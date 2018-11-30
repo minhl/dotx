@@ -1,0 +1,186 @@
+__info__:
+  Description: Contoso University Schema
+  Author: Minh Luu
+  Created: 2018-11-26
+
+AssignedCourseData:
+  __viewModel__: true
+  __filePath__: SchoolViewModels
+  __cols__:
+    - CourseID: int
+    - Title: string
+    - Assigned: bool
+
+Course:
+  __cols__:
+    - CourseID: int
+      __@__:
+        - DatabaseGenerated: DatabaseGeneratedOption.None
+        - Display: Name = "Number"
+    - Title: string
+      __@__:
+        - StringLength: 50
+    - Credits: int
+      __@__:
+        - Range: 0, 5
+    - DepartmentID: int
+  __rels__:
+    - Department: Department
+    - Enrollments: list<Enrollment>
+    - CourseAssignments: list<CourseAssignment>
+
+CourseVM:
+  __viewModel__: true
+  __cols__:
+    - CourseID: int
+    - Title: string
+    - Credits: int
+    - DepartmentName: string
+
+CourseAssignment:
+  __cols__:
+    - InstructorID: int
+    - CourseID: int
+  __rels__:
+    - Instructor: Instructor
+    - Course: Course
+
+Department:
+  __cols__:
+    - DepartmentID: int
+    - Name: string
+      __@__:
+        - StringLength: 50
+    - Budget: decimal
+      __@__:
+        - DataType: DataType.Currency
+        - Column: TypeName = "money"
+    - StartDate: DateTime
+      __@__:
+        - DataType: DataType.Date
+        - DisplayFormat: DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true
+        - Display: Name = "Start Date"
+    - InstructorID: int?
+    - RowVersion: byte[]
+      __@__:
+        - Timestamp:
+  __rels__:
+    - Administrator: Instructor
+    - Courses: list<Course>
+
+Enrollment:
+  __prefix__: |-
+    public enum Grade
+    {
+        A, B, C, D, F
+    }
+  __cols__:
+    - EnrollmentID: int
+    - CourseID: int
+    - StudentID: int
+    - Grade: Grade?
+      __@__:
+        - DisplayFormat: NullDisplayText = "No grade"
+  __rels__:
+    - Course: Course
+    - Student: Student
+
+EnrollmentDateGroup:
+  __viewModel__: true
+  __filePath__: SchoolViewModels
+  __cols__:
+    - EnrollmentDate: DateTime?
+      __@__:
+        - DataType: DataType.Date
+    - StudentCount: int
+
+Instructor:
+  __cols__:
+    - ID: int
+    - LastName: string
+      __@__:
+        - Required:
+        - Display: Name = "Last Name"
+        - StringLength: 50
+    - FirstName: string
+      __@__:
+        - Required:
+        - Display: Name = "First Name"
+        - StringLength: 50
+    - HireDate: DateTime
+      __@__:
+        - DataType: DataType.Date
+        - DisplayFormat: DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true
+        - Display: Name = "Hire Date"
+  __rels__:
+    - CourseAssignments: list<CourseAssignment>
+    - OfficeAssignment: OfficeAssignment
+  __methods__:
+    - FullName: string
+      __@__:
+        - Display: Name = "Full Name"
+      __get__: 'return LastName + ", " + FirstName;'
+
+InstructorIndexData:
+  __viewModel__: true
+  __filePath__: SchoolViewModels
+  __cols__:
+    - Instructors: enumerable<Instructor>
+    - Courses: enumerable<Course>
+    - Enrollments: enumerable<Enrollment>
+
+OfficeAssignment:
+  __cols__:
+    - InstructorID: int
+      __@__:
+        - Key:
+    - Location: string
+      __@__:
+        - StringLength: 50
+        - Display: Name = "Office Location"
+  __rels__:
+    - Instructor: Instructor
+
+Student:
+  __cols__:
+    - ID: int
+    - LastName: string
+      __@__:
+        - Required:
+        - StringLength: 50
+        - Display: Name = "Last Name"
+    - FirstName: string
+      __@__:
+        - Required:
+        - StringLength: 50, ErrorMessage = "First name cannot be longer than 50 characters."
+        - Display: Name = "First Name"
+    - EnrollmentDate: DateTime
+      __@__:
+        - DataType: DataType.Date
+        - DisplayFormat: DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true
+        - Display: Name = "Enrollment Date"
+  __rels__:
+    - Enrollments: list<Enrollment>
+  __methods__:
+    - FullName: string
+      __get__: return LastName + ", " + FirstName;
+
+StudentVM:
+  __viewModel__: true
+  __cols__:
+    - ID: int
+    - LastName: string
+      __@__:
+        - Required:
+        - StringLength: 50
+        - Display: Name = "Last Name"
+    - FirstName: string
+      __@__:
+        - Required:
+        - StringLength: 50, ErrorMessage = "First name cannot be longer than 50 characters."
+        - Display: Name = "First Name"
+    - EnrollmentDate: DateTime
+      __@__:
+        - DataType: DataType.Date
+        - DisplayFormat: DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true
+        - Display: Name = "Enrollment Date"
