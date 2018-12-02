@@ -19,6 +19,7 @@ PagesDir   = 'Pages'
 
 ModelTemplate = '''$USING
 
+namespace $NAMESPACE
 {$PREFIX
     public class $CLASSNAME
     {
@@ -61,7 +62,7 @@ def addToList(alist, item):
         alist.append(item)
 
 def createFile(filePath, content, overwrite=False):
-    dirPath = os.path.split(filePath)[-1]
+    dirPath = os.path.split(filePath)[:-1]
     if len(dirPath) > 1:
         dirPath = os.path.join(*dirPath)
         if not os.path.exists(dirPath):
@@ -86,16 +87,20 @@ AnnotationCommonLib = 'System.ComponentModel.DataAnnotations'
     
 def parseAnnotates(data, libs, annotates):
     for row in data:
-        lib = AnnotationCommonLib
-        for key, value in row.items():
-            if value:
-                annotates.append('[%s(%s)]' % (key, value))
-            else:
-                annotates.append('[%s]' % key)
+        if isinstance(row, str):
+            annotates.append('[%s]' % row)
+        elif isinstance(row, dict):
+            for key, value in row.items():
+                if value:
+                    annotates.append('[%s(%s)]' % (key, value))
+                else:
+                    annotates.append('[%s]' % key)
 
-            if key in AnnotationLibs:
-                lib = AnnotationLibs[key]
-        addToList(libs, lib)
+                if key in AnnotationLibs:
+                    lib = AnnotationLibs[key]
+                else:
+                    lib = AnnotationCommonLib
+            addToList(libs, lib)
 
 
 class Method(object):
@@ -107,11 +112,11 @@ class Method(object):
         self.annotates = []
 
         for key, value in data.items():
-            if key == '__@__':
+            if key == '_@_':
                 parseAnnotates(value, libs, self.annotates)
-            elif key == '__get__':
+            elif key == '_get_':
                 self.get = value
-            elif key == '__set__':
+            elif key == '_set_':
                 self.set = value
             elif self.name:
                 error("Invalid method config '%s'" % key)
@@ -146,7 +151,7 @@ class Column(object):
         colName, colType = '', ''
         annotates = []
         for key, value in col.items():
-            if key == '__@__':
+            if key == '_@_':
                 parseAnnotates(value, libs, annotates)
             elif colName:
                 error("Invalid column configuration '%s'" % key)
@@ -156,7 +161,7 @@ class Column(object):
 
         collectionsLib = 'System.Collections.Generic'
 
-        if colName != '__text__':
+        if colName != '_text_':
             if colType.startswith('list<'):
                 colType = 'ICollection<%s>' % colType[5:-1]
                 addToList(libs, collectionsLib)
@@ -176,7 +181,7 @@ class Column(object):
             rs.append('')
             rs.extend([x for x in self.annotates])
 
-        if self.name == '__text__':
+        if self.name == '_text_':
             text = indent.join(self.type.split(Newline))
             rs.append(Newline + text)
         else:
@@ -201,20 +206,20 @@ class Model(object):
         addToList(self.uses, 'System')
 
         for key, value in modelData.items():
-            if key == '__cols__':
+            if key == '_cols_':
                 for col in value:
                     self.cols.append(Column(col, self.uses))
-            elif key == '__rels__':
+            elif key == '_rels_':
                 for rel in value:
                     self.rels.append(Column(rel, self.relUses))
-            elif key == '__methods__':
+            elif key == '_methods_':
                 for met in value:
                     self.methods.append(Method(met, self.uses))
-            elif key == '__prefix__':
+            elif key == '_prefix_':
                 self.classPrefix = value
-            elif key == '__viewModel__':
+            elif key == '_viewModel_':
                 self.viewModel = value
-            elif key == '__filePath__':
+            elif key == '_filePath_':
                 self.filePath = value
             else:
                 error("Invalid model configuration '%s'" % key)
